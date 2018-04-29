@@ -2,13 +2,13 @@ from itertools import cycle
 import random
 import sys
 
+from QLearningAgent import QLearningAgent
 import pygame
 from pygame.locals import *
-import numpy as np
-from keras.models import load_model
-model = load_model('nn.h5')
 
-FPS = 60
+Agent = QLearningAgent()
+
+FPS = 1000
 SCREENWIDTH  = 288
 SCREENHEIGHT = 512
 # amount by which base can maximum shift to left
@@ -159,12 +159,18 @@ def showWelcomeAnimation():
     # player shm for up-down motion on welcome screen
     playerShmVals = {'val': 0, 'dir': 1}
 
-    SOUNDS['wing'].play()
-    return {
-        'playery': playery + playerShmVals['val'],
-        'basex': basex,
-        'playerIndexGen': playerIndexGen,
-    }
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                Agent.write_data()
+                pygame.quit()
+                sys.exit()
+
+        return {
+            'playery': playery + playerShmVals['val'],
+            'basex': basex,
+            'playerIndexGen': playerIndexGen,
+        }
 
 def mainGame(movementInfo):
     score = playerIndex = loopIter = 0
@@ -178,15 +184,16 @@ def mainGame(movementInfo):
     newPipe1 = getRandomPipe()
     newPipe2 = getRandomPipe()
 
+    # list of upper pipes
     upperPipes = [
-        {'x': playerx + (SCREENWIDTH/2), 'y': newPipe1[0]['y']},
-        {'x': playerx + (SCREENWIDTH), 'y': newPipe2[0]['y']},
+        {'x': SCREENWIDTH + 200, 'y': newPipe1[0]['y']},
+        {'x': SCREENWIDTH + 200 + (SCREENWIDTH / 2), 'y': newPipe2[0]['y']},
     ]
 
     # list of lowerpipe
     lowerPipes = [
-        {'x': playerx + (SCREENWIDTH/2), 'y': newPipe1[1]['y']},
-        {'x': playerx + (SCREENWIDTH), 'y': newPipe2[1]['y']},
+        {'x': SCREENWIDTH + 200, 'y': newPipe1[1]['y']},
+        {'x': SCREENWIDTH + 200 + (SCREENWIDTH / 2), 'y': newPipe2[1]['y']},
     ]
 
     pipeVelX = -4
@@ -202,47 +209,39 @@ def mainGame(movementInfo):
     playerFlapAcc =  -9   # players speed on flapping
     playerFlapped = False # True when player flaps
 
+
     while True:
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                Agent.write_data()
                 pygame.quit()
                 sys.exit()
+            if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
+                if playery > -2 * IMAGES['player'][0].get_height():
+                    playerVelY = playerFlapAcc
+                    playerFlapped = True
+                    # SOUNDS['wing'].play()
 
-        # x_dist_pipe = upperPipes[0]['x'] - (playerx + int(IMAGES['player'][0].get_width()/2))
-        # if(x_dist_pipe + int(IMAGES['player'][0].get_width()/2) < -IMAGES['pipe'][0].get_width()):
-        #     x_dist_pipe = upperPipes[1]['x'] - (playerx + int(IMAGES['player'][0].get_width()/2))
-        #     p=1
-        # else:
-        #     p=0
-        # x_dist_pipe = upperPipes[p]['x'] - (playerx + int(IMAGES['player'][0].get_width()/2))
-        # y_dist_upipe = upperPipes[p]['y'] - playery
-        # y_dist_lpipe = lowerPipes[p]['y'] - playery
-        # X = np.matrix([playerVelY,x_dist_pipe,y_dist_lpipe])
-        # z = model.predict(X)
-        # y = np.argmax(z)
-
-        x_dist_pipe = upperPipes[0]['x'] + IMAGES['pipe'][0].get_width() - (playerx + IMAGES['player'][0].get_width())
-        if x_dist_pipe > 0:
-            p=1
-        else:
-            p=0
-        x_dist_pipe = upperPipes[p]['x'] + IMAGES['pipe'][p].get_width() - (playerx + IMAGES['player'][0].get_width())
-        y_dist_upipe = playery - upperPipes[p]['y'] - IMAGES['pipe'][p].get_height()
-        y_dist_lpipe = lowerPipes[p]['y'] - playery
-        X = np.matrix([x_dist_pipe,y_dist_upipe,y_dist_lpipe,playerVelY])
-        y = model.predict_classes(X)
-        
-        if y[0] == 1:
-            if playery > -2 * IMAGES['player'][0].get_height():
-                playerVelY = playerFlapAcc
-                playerFlapped = True
-                SOUNDS['wing'].play()
+        xdist_pipe = lowerPipes[0]['x'] - playerx + 30
+        if xdist_pipe > 0: 
+        	PipeNo = 0
+        else: 
+        	PipeNo = 1
+        x_dist_lpipe = lowerPipes[PipeNo]['x'] - playerx
+        y_dist_lpipe = lowerPipes[PipeNo]['y'] - playery
+        # print(x_dist_lpipe,y_dist_lpipe,playerVelY)
+        if Agent.act(int((x_dist_lpipe + 60)/5),int((y_dist_lpipe + 225)/5),int(playerVelY + 9)):
+        	if playery > -2 * IMAGES['player'][0].get_height():
+                    playerVelY = playerFlapAcc
+                    playerFlapped = True
+                    # SOUNDS['wing'].play()
 
         # check for crash here
         crashTest = checkCrash({'x': playerx, 'y': playery, 'index': playerIndex},
                                upperPipes, lowerPipes)
         if crashTest[0]:
-            return {
+        	Agent.update_qvalues(score)
+        	return {
                 'y': playery,
                 'groundCrash': crashTest[1],
                 'basex': basex,
@@ -259,7 +258,7 @@ def mainGame(movementInfo):
             pipeMidPos = pipe['x'] + IMAGES['pipe'][0].get_width() / 2
             if pipeMidPos <= playerMidPos < pipeMidPos + 4:
                 score += 1
-                SOUNDS['point'].play()
+                # SOUNDS['point'].play()
 
         # playerIndex basex change
         if (loopIter + 1) % 3 == 0:
@@ -338,19 +337,20 @@ def showGameOverScreen(crashInfo):
     upperPipes, lowerPipes = crashInfo['upperPipes'], crashInfo['lowerPipes']
 
     # play hit and die sounds
-    SOUNDS['hit'].play()
-    if not crashInfo['groundCrash']:
-        SOUNDS['die'].play()
+    # SOUNDS['hit'].play()
+    # if not crashInfo['groundCrash']:
+    #     SOUNDS['die'].play()
 
     while True:
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                Agent.write_data()
                 pygame.quit()
                 sys.exit()
             if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
                 if playery + playerHeight >= BASEY - 1:
                     return
-
+        return
         # player y shift
         if playery + playerHeight < BASEY - 1:
             playery += min(playerVelY, BASEY - playery - playerHeight)
