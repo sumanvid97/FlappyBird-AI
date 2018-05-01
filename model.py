@@ -2,7 +2,7 @@ import numpy as np
 from keras.models import Sequential
 from keras.layers import Dense
 
-dataset = np.loadtxt("train.csv", delimiter=",")
+dataset = np.loadtxt("../train.csv", delimiter=",")
 # split into input (X) and output (Y) variables
 X = dataset[:,0:3]
 y = dataset[:,3]

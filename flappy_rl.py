@@ -8,7 +8,7 @@ from pygame.locals import *
 
 Agent = QLearningAgent()
 
-FPS = 1000
+FPS = 5000
 SCREENWIDTH  = 288
 SCREENHEIGHT = 512
 # amount by which base can maximum shift to left
@@ -208,7 +208,7 @@ def mainGame(movementInfo):
     playerRotThr  =  20   # rotation threshold
     playerFlapAcc =  -9   # players speed on flapping
     playerFlapped = False # True when player flaps
-
+    reward = 0
 
     while True:
         for event in pygame.event.get():
@@ -229,7 +229,6 @@ def mainGame(movementInfo):
         	PipeNo = 1
         x_dist_lpipe = lowerPipes[PipeNo]['x'] - playerx
         y_dist_lpipe = lowerPipes[PipeNo]['y'] - playery
-        # print(x_dist_lpipe,y_dist_lpipe,playerVelY)
         if Agent.act(int((x_dist_lpipe + 60)/5),int((y_dist_lpipe + 225)/5),int(playerVelY + 9)):
         	if playery > -2 * IMAGES['player'][0].get_height():
                     playerVelY = playerFlapAcc
@@ -252,13 +251,17 @@ def mainGame(movementInfo):
                 'playerRot': playerRot
             }
 
+        reward = 1
         # check for score
         playerMidPos = playerx + IMAGES['player'][0].get_width() / 2
         for pipe in upperPipes:
             pipeMidPos = pipe['x'] + IMAGES['pipe'][0].get_width() / 2
             if pipeMidPos <= playerMidPos < pipeMidPos + 4:
                 score += 1
+                reward = 2
                 # SOUNDS['point'].play()
+
+        Agent.record(reward)
 
         # playerIndex basex change
         if (loopIter + 1) % 3 == 0:

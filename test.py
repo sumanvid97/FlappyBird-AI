@@ -2,7 +2,7 @@ import numpy as np
 from keras.models import load_model
 
 model = load_model('nn.h5')
-dataset = np.loadtxt("test.csv", delimiter=",")
+dataset = np.loadtxt("../test.csv", delimiter=",")
 # dataset = np.loadtxt("record.csv", delimiter=",")
 # split into input (X) and output (Y) variables
 test_X = dataset[:,0:3]
