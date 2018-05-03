@@ -1,12 +1,18 @@
 from itertools import cycle
-import random
 import sys
-
-from QLearningAgent import QLearningAgent
+import random
+from q_learning_agent import *  
 import pygame
 from pygame.locals import *
 
-Agent = QLearningAgent()
+if len(sys.argv) == 1:
+    agent = 'QLearningAgent'
+elif sys.argv[1] == 'greedy':
+    agent = 'QLearningAgentGreedy'
+if agent == 'QLearningAgent':
+    Agent = QLearningAgent()
+else:
+    Agent = QLearningAgentGreedy()
 
 FPS = 5000
 SCREENWIDTH  = 288
@@ -87,18 +93,6 @@ def main():
     # base (ground) sprite
     IMAGES['base'] = pygame.image.load('assets/sprites/base.png').convert_alpha()
 
-    # sounds
-    if 'win' in sys.platform:
-        soundExt = '.wav'
-    else:
-        soundExt = '.ogg'
-
-    SOUNDS['die']    = pygame.mixer.Sound('assets/audio/die' + soundExt)
-    SOUNDS['hit']    = pygame.mixer.Sound('assets/audio/hit' + soundExt)
-    SOUNDS['point']  = pygame.mixer.Sound('assets/audio/point' + soundExt)
-    SOUNDS['swoosh'] = pygame.mixer.Sound('assets/audio/swoosh' + soundExt)
-    SOUNDS['wing']   = pygame.mixer.Sound('assets/audio/wing' + soundExt)
-
     while True:
         # select random background sprites
         randBg = random.randint(0, len(BACKGROUNDS_LIST) - 1)
@@ -139,38 +133,13 @@ def main():
 
 
 def showWelcomeAnimation():
-    """Shows welcome screen animation of flappy bird"""
-    # index of player to blit on screen
-    playerIndex = 0
-    playerIndexGen = cycle([0, 1, 2, 1])
-    # iterator used to change playerIndex after every 5th iteration
-    loopIter = 0
-
-    playerx = int(SCREENWIDTH * 0.2)
     playery = int((SCREENHEIGHT - IMAGES['player'][0].get_height()) / 2)
-
-    messagex = int((SCREENWIDTH - IMAGES['message'].get_width()) / 2)
-    messagey = int(SCREENHEIGHT * 0.12)
-
-    basex = 0
-    # amount by which base can maximum shift to left
-    baseShift = IMAGES['base'].get_width() - IMAGES['background'].get_width()
-
-    # player shm for up-down motion on welcome screen
-    playerShmVals = {'val': 0, 'dir': 1}
-
-    while True:
-        for event in pygame.event.get():
-            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                Agent.write_data()
-                pygame.quit()
-                sys.exit()
-
-        return {
-            'playery': playery + playerShmVals['val'],
-            'basex': basex,
-            'playerIndexGen': playerIndexGen,
-        }
+    playerIndexGen = cycle([0, 1, 2, 1])
+    return {
+        'playery': playery,
+        'basex': 0,
+        'playerIndexGen': playerIndexGen,
+    }
 
 def mainGame(movementInfo):
     score = playerIndex = loopIter = 0
@@ -203,9 +172,6 @@ def mainGame(movementInfo):
     playerMaxVelY =  10   # max vel along Y, max descend speed
     playerMinVelY =  -8   # min vel along Y, max ascend speed
     playerAccY    =   1   # players downward accleration
-    playerRot     =  45   # player's rotation
-    playerVelRot  =   3   # angular speed
-    playerRotThr  =  20   # rotation threshold
     playerFlapAcc =  -9   # players speed on flapping
     playerFlapped = False # True when player flaps
     reward = 0
@@ -220,8 +186,7 @@ def mainGame(movementInfo):
                 if playery > -2 * IMAGES['player'][0].get_height():
                     playerVelY = playerFlapAcc
                     playerFlapped = True
-                    # SOUNDS['wing'].play()
-
+                    
         xdist_pipe = lowerPipes[0]['x'] - playerx + 30
         if xdist_pipe > 0: 
         	PipeNo = 0
@@ -233,8 +198,7 @@ def mainGame(movementInfo):
         	if playery > -2 * IMAGES['player'][0].get_height():
                     playerVelY = playerFlapAcc
                     playerFlapped = True
-                    # SOUNDS['wing'].play()
-
+                    
         # check for crash here
         crashTest = checkCrash({'x': playerx, 'y': playery, 'index': playerIndex},
                                upperPipes, lowerPipes)
@@ -248,7 +212,6 @@ def mainGame(movementInfo):
                 'lowerPipes': lowerPipes,
                 'score': score,
                 'playerVelY': playerVelY,
-                'playerRot': playerRot
             }
 
         reward = 1
@@ -259,8 +222,7 @@ def mainGame(movementInfo):
             if pipeMidPos <= playerMidPos < pipeMidPos + 4:
                 score += 1
                 reward = 2
-                # SOUNDS['point'].play()
-
+                
         Agent.record(reward)
 
         # playerIndex basex change
@@ -269,18 +231,11 @@ def mainGame(movementInfo):
         loopIter = (loopIter + 1) % 30
         basex = -((-basex + 100) % baseShift)
 
-        # rotate the player
-        if playerRot > -90:
-            playerRot -= playerVelRot
-
         # player's movement
         if playerVelY < playerMaxVelY and not playerFlapped:
             playerVelY += playerAccY
         if playerFlapped:
             playerFlapped = False
-
-            # more rotation to cover the threshold (calculated in visible rotation)
-            playerRot = 45
 
         playerHeight = IMAGES['player'][playerIndex].get_height()
         playery += min(playerVelY, BASEY - playery - playerHeight)
@@ -311,13 +266,8 @@ def mainGame(movementInfo):
         SCREEN.blit(IMAGES['base'], (basex, BASEY))
         # print score so player overlaps the score
         showScore(score)
-
-        # Player rotation has a threshold
-        visibleRot = playerRotThr
-        if playerRot <= playerRotThr:
-            visibleRot = playerRot
         
-        playerSurface = pygame.transform.rotate(IMAGES['player'][playerIndex], visibleRot)
+        playerSurface = IMAGES['player'][playerIndex]
         SCREEN.blit(playerSurface, (playerx, playery))
 
         pygame.display.update()
@@ -332,17 +282,10 @@ def showGameOverScreen(crashInfo):
     playerHeight = IMAGES['player'][0].get_height()
     playerVelY = crashInfo['playerVelY']
     playerAccY = 2
-    playerRot = crashInfo['playerRot']
-    playerVelRot = 7
 
     basex = crashInfo['basex']
 
     upperPipes, lowerPipes = crashInfo['upperPipes'], crashInfo['lowerPipes']
-
-    # play hit and die sounds
-    # SOUNDS['hit'].play()
-    # if not crashInfo['groundCrash']:
-    #     SOUNDS['die'].play()
 
     while True:
         for event in pygame.event.get():
@@ -362,11 +305,6 @@ def showGameOverScreen(crashInfo):
         if playerVelY < 15:
             playerVelY += playerAccY
 
-        # rotate only when it's a pipe crash
-        if not crashInfo['groundCrash']:
-            if playerRot > -90:
-                playerRot -= playerVelRot
-
         # draw sprites
         SCREEN.blit(IMAGES['background'], (0,0))
 
@@ -383,18 +321,6 @@ def showGameOverScreen(crashInfo):
         FPSCLOCK.tick(FPS)
         pygame.display.update()
 
-
-def playerShm(playerShm):
-    """oscillates the value of playerShm['val'] between 8 and -8"""
-    if abs(playerShm['val']) == 8:
-        playerShm['dir'] *= -1
-
-    if playerShm['dir'] == 1:
-         playerShm['val'] += 1
-    else:
-        playerShm['val'] -= 1
-
-
 def getRandomPipe():
     """returns a randomly generated pipe"""
     # y of gap between upper and lower pipe
@@ -407,7 +333,6 @@ def getRandomPipe():
         {'x': pipeX, 'y': gapY - pipeHeight},  # upper pipe
         {'x': pipeX, 'y': gapY + PIPEGAPSIZE}, # lower pipe
     ]
-
 
 def showScore(score):
     """displays score in center of screen"""

@@ -1,12 +1,13 @@
 import numpy as np
+import sys
 import matplotlib.pyplot as plt
 
-dataset = np.loadtxt('scores.txt', delimiter=',')
+dataset = np.loadtxt(sys.argv[1], delimiter=',')
 # split into input (X) and output (Y) variables
 x = dataset[:,0]
 y = dataset[:,1] 
 # plotting points as a scatter plot
-plt.scatter(x, y, s=5)
+plt.scatter(x, y, s=1)
  
 # x-axis label
 plt.xlabel('Iterations')
@@ -18,6 +19,6 @@ plt.title('Score')
 plt.legend()
  
 # function to show the plot
-plt.savefig('plot.png')
+plt.savefig('plot'+sys.argv[1].split(".")[0]+'.png')
 plt.show()
 
