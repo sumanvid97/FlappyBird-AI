@@ -5,16 +5,18 @@ from q_learning_agent import *
 import pygame
 from pygame.locals import *
 
-if len(sys.argv) == 1:
-    agent = 'QLearningAgent'
-elif sys.argv[1] == 'greedy':
-    agent = 'QLearningAgentGreedy'
-if agent == 'QLearningAgent':
-    Agent = QLearningAgent()
-else:
-    Agent = QLearningAgentGreedy()
+mode = sys.argv[1]
+if mode == 'Train':
+    train = True
+elif mode == 'Run':
+    train = False
 
-FPS = 5000
+if len(sys.argv) == 2:
+    Agent = QLearningAgent(train)
+elif sys.argv[2] == 'greedy':
+    Agent = QLearningAgentGreedy(train)
+
+FPS = 6000
 SCREENWIDTH  = 288
 SCREENHEIGHT = 512
 # amount by which base can maximum shift to left
@@ -179,7 +181,8 @@ def mainGame(movementInfo):
     while True:
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                Agent.write_data()
+                if train:
+                    Agent.save_model()
                 pygame.quit()
                 sys.exit()
             if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
@@ -203,8 +206,8 @@ def mainGame(movementInfo):
         crashTest = checkCrash({'x': playerx, 'y': playery, 'index': playerIndex},
                                upperPipes, lowerPipes)
         if crashTest[0]:
-        	Agent.update_qvalues(score)
-        	return {
+            Agent.update_qvalues(score)
+            return {
                 'y': playery,
                 'groundCrash': crashTest[1],
                 'basex': basex,
@@ -213,7 +216,7 @@ def mainGame(movementInfo):
                 'score': score,
                 'playerVelY': playerVelY,
             }
-
+            
         reward = 1
         # check for score
         playerMidPos = playerx + IMAGES['player'][0].get_width() / 2
@@ -221,9 +224,9 @@ def mainGame(movementInfo):
             pipeMidPos = pipe['x'] + IMAGES['pipe'][0].get_width() / 2
             if pipeMidPos <= playerMidPos < pipeMidPos + 4:
                 score += 1
-                reward = 2
-                
-        Agent.record(reward)
+                reward = 5
+        if train:        
+            Agent.record(reward)
 
         # playerIndex basex change
         if (loopIter + 1) % 3 == 0:
@@ -290,7 +293,8 @@ def showGameOverScreen(crashInfo):
     while True:
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                Agent.write_data()
+                if train:
+                    Agent.save_model()
                 pygame.quit()
                 sys.exit()
             if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):

@@ -2,10 +2,8 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 
-dataset = np.loadtxt(sys.argv[1], delimiter=',')
-# split into input (X) and output (Y) variables
-x = dataset[:,0]
-y = dataset[:,1] 
+y = np.loadtxt(sys.argv[1], delimiter=',')
+x = range(len(y)) 
 # plotting points as a scatter plot
 plt.scatter(x, y, s=1)
  
