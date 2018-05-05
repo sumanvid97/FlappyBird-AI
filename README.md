@@ -1,15 +1,17 @@
 # Learning to Flap using RL techniques
 
 ## Implementations:
-Simple Q-Learning 
-Q-Learning (with ε-greedy policy)
-Deep Q-Network 
+
+ - Simple Q-Learning  
+ - Q-Learning (with ε-greedy policy) 
+ - Deep Q-Network
 
 ## Installation Dependencies:
-Python 3
-pygame
-scikit-image
-Keras 2
+
+ - Python 3 
+ - pygame 
+ - scikit-image 
+ - Keras 2
 
 ## Simple Q-Learning:
 ### Running the saved model:
