@@ -5,18 +5,20 @@ from q_learning_agent import *
 import pygame
 from pygame.locals import *
 
+# Set flag : Train or Run
 mode = sys.argv[1]
 if mode == 'Train':
     train = True
 elif mode == 'Run':
     train = False
 
+# call an instance of agent
 if len(sys.argv) == 2:
     Agent = QLearningAgent(train)
 elif sys.argv[2] == 'greedy':
     Agent = QLearningAgentGreedy(train)
 
-FPS = 6000
+FPS = 30
 SCREENWIDTH  = 288
 SCREENHEIGHT = 512
 # amount by which base can maximum shift to left
@@ -60,12 +62,10 @@ PIPES_LIST = (
     'assets/sprites/pipe-red.png',
 )
 
-
 try:
     xrange
 except NameError:
     xrange = range
-
 
 def main():
     global SCREEN, FPSCLOCK
@@ -189,7 +189,8 @@ def mainGame(movementInfo):
                 if playery > -2 * IMAGES['player'][0].get_height():
                     playerVelY = playerFlapAcc
                     playerFlapped = True
-                    
+        
+        # calculate the data             
         xdist_pipe = lowerPipes[0]['x'] - playerx + 30
         if xdist_pipe > 0: 
         	PipeNo = 0
@@ -197,6 +198,8 @@ def mainGame(movementInfo):
         	PipeNo = 1
         x_dist_lpipe = lowerPipes[PipeNo]['x'] - playerx
         y_dist_lpipe = lowerPipes[PipeNo]['y'] - playery
+
+        # feed parameters to agent which in turn returns action
         if Agent.act(int((x_dist_lpipe + 60)/5),int((y_dist_lpipe + 225)/5),int(playerVelY + 9)):
         	if playery > -2 * IMAGES['player'][0].get_height():
                     playerVelY = playerFlapAcc

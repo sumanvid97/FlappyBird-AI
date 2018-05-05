@@ -17,10 +17,12 @@ class QLearningAgent(object):
 		self.xdim = 130
 		self.ydim = 130
 		self.vdim = 20
+		# initialize matrix to store qvalues
 		self.qvalues = np.zeros((self.xdim, self.ydim, self.vdim, 2))
 		self.initialize_model()
 
 	def initialize_model(self):
+		# load episode, qvalues from already existing qvalues.txt
 		if os.path.exists("qvalues.txt"):
 			qfile = open("qvalues.txt","r")
 			line = qfile.readline()
@@ -34,11 +36,13 @@ class QLearningAgent(object):
 			qfile.close()
 		
 	def act(self, xdist, ydist, vely):
+		# store the transition from previous state to current state
 		if self.train:
 			state = [xdist,ydist,vely]
 			self.moves.append([self.previous_state,self.previous_action,state,0])
 			self.previous_state = state
 
+		# get action with max qvalue for current state
 		if self.qvalues[xdist,ydist,vely][0] >= self.qvalues[xdist,ydist,vely][1]:
 			self.previous_action = 0
 		else:
@@ -46,6 +50,7 @@ class QLearningAgent(object):
 		return self.previous_action
 
 	def record(self,reward):
+		# set reward to the last transition
 		self.moves[-1][3] = reward
 
 	def update_qvalues(self, score):
@@ -66,12 +71,14 @@ class QLearningAgent(object):
 				action = move[1]
 				[x1,y1,z1] = move[2]
 				reward = move[3]
+				# penalize last 2 states before crash
 				if first or second:
 					reward = -1000000
 					if first:
 						first = False
 					else:
 						second = False
+				# penalize last jump before crash
 				if jump and action:
 					reward = -1000000
 					jump = False
@@ -79,6 +86,7 @@ class QLearningAgent(object):
 			self.moves = []
 
 	def save_model(self):
+		# write the episode, qvalues to qvalues.txt
 		data = str(self.episode) + "\n"
 		for x in range(self.xdim):
 			for y in range(self.ydim):
@@ -89,6 +97,7 @@ class QLearningAgent(object):
 		qfile.write(data)
 		qfile.close()
 		
+		# append the scores to scores.txt
 		data1 = ''
 		for i in range(len(self.scores)):
 			data1 += str(self.scores[i]) + "\n"
@@ -114,10 +123,12 @@ class QLearningAgentGreedy(object):
 		self.vdim = 20
 		self.moves = []
 		self.scores = []
+		# initialize matrix to store qvalues
 		self.qvalues = np.zeros((self.xdim, self.ydim, self.vdim, 2))
 		self.initialize_model()
 
 	def initialize_model(self):
+		# load episode, qvalues from already existing qvalues.txt
 		if os.path.exists("qvalues_greedy.txt"):
 			qfile = open("qvalues_greedy.txt","r")
 			line = qfile.readline()
@@ -131,11 +142,13 @@ class QLearningAgentGreedy(object):
 			qfile.close()
 		
 	def act(self, xdist, ydist, vely):
+		# store the transition from previous state to current state
 		if self.train:
 			state = [xdist,ydist,vely]
 			self.moves.append([self.previous_state,self.previous_action,state,0])
 			self.previous_state = state
 
+			# get an action epsilon greedy policy
 			if random.random() <= self.epsilon:
 				self.previous_action = random.randrange(2)
 			elif self.qvalues[xdist,ydist,vely][0] >= self.qvalues[xdist,ydist,vely][1]:
@@ -151,6 +164,7 @@ class QLearningAgentGreedy(object):
 		return self.previous_action
 
 	def record(self,reward):
+		# set reward to the last transition
 		self.moves[-1][3] = reward
 
 	def update_qvalues(self, score):
@@ -171,22 +185,26 @@ class QLearningAgentGreedy(object):
 				action = move[1]
 				[x1,y1,z1] = move[2]
 				reward = move[3]
+				# penalize last 2 states before crash
 				if first or second:
 					reward = -1
 					if first:
 						first = False
 					else:
 						second = False
+				# penalize last jump before crash
 				if jump and action:
 					reward = -1
 					jump = False
 				self.qvalues[x,y,v,action] = (1- self.learning_rate) * (self.qvalues[x,y,v,action]) + (self.learning_rate) * ( reward + (self.discount_factor)*max(self.qvalues[x1,y1,z1,0],self.qvalues[x1,y1,z1,1]))
 
 			self.moves = []
+			# decay epsilon linearly
 			if self.epsilon > self.final_epsilon:
 				self.epsilon -= self.epsilon_decay
 		
 	def save_model(self):
+		# write the episode, epsilon, qvalues to qvalues.txt
 		data = str(self.episode) + "," + str(self.epsilon) + "\n"
 		for x in range(self.xdim):
 			for y in range(self.ydim):
@@ -197,6 +215,7 @@ class QLearningAgentGreedy(object):
 		qfile.write(data)
 		qfile.close()
 		
+		# append the scores to scores.txt
 		data1 = ''
 		for i in range(len(self.scores)):
 			data1 += str(self.scores[i]) + "\n"

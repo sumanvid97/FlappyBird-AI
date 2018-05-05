@@ -43,9 +43,9 @@ playerHeight = IMAGES['player'][0].get_height()
 def getHitmask(image):
     """returns a hitmask using an image's alpha."""
     mask = []
-    for x in xrange(image.get_width()):
+    for x in range(image.get_width()):
         mask.append([])
-        for y in xrange(image.get_height()):
+        for y in range(image.get_height()):
             mask[x].append(bool(image.get_at((x,y))[3]))
     return mask
 
@@ -97,7 +97,7 @@ class State:
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
-
+        # reward to stay alive
         reward = 0.1
         alive = 1
         if action == 1:
@@ -111,6 +111,7 @@ class State:
             pipeMidPos = pipe['x'] + IMAGES['pipe'][0].get_width() / 2
             if pipeMidPos <= playerMidPos < pipeMidPos + 4:
                 self.score += 1
+                # reward to cross pipe
                 reward = 1
         score = self.score
         # playerIndex basex change
@@ -149,6 +150,7 @@ class State:
         if crashTest[0]:
             alive = 0
             self.__init__()
+            # reward for crashing
             reward = -1
 
         # draw sprites
@@ -223,8 +225,8 @@ def pixelCollision(rect1, rect2, hitmask1, hitmask2):
     x1, y1 = rect.x - rect1.x, rect.y - rect1.y
     x2, y2 = rect.x - rect2.x, rect.y - rect2.y
 
-    for x in xrange(rect.width):
-        for y in xrange(rect.height):
+    for x in range(rect.width):
+        for y in range(rect.height):
             if hitmask1[x1+x][y1+y] and hitmask2[x2+x][y2+y]:
                 return True
     return False
