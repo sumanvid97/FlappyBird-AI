@@ -6,6 +6,10 @@
  - Q-Learning (with ε-greedy policy) 
  - Deep Q-Network
 
+## Blog:
+
+ - The details about this project have been accounted on this blogpost [here]. Do have a look.
+
 ## Installation Dependencies:
 
  - Python 3 
@@ -45,3 +49,7 @@ To train a fresh model, delete the file **dqn.h5** and then execute the above co
 
 ## Raw Environment:
 https://github.com/sourabhv/FlapPyBird
+
+
+[here]: <https://medium.com/@videshsuman/using-reinforcement-learning-techniques-to-build-an-ai-bot-for-the-game-flappy-bird-30e0fd22f990>
+
