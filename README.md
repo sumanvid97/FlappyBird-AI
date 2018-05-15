@@ -7,8 +7,7 @@
  - Deep Q-Network
 
 ## Blog:
-
- - The details about this project have been accounted on this blogpost [here]. Do have a look.
+The details about this project have been accounted on this blogpost [here]. Do have a look.
 
 ## Installation Dependencies:
 
