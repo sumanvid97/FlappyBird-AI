@@ -6,8 +6,12 @@
  - Q-Learning (with ε-greedy policy) 
  - Deep Q-Network
 
+## Presentation:
+This [set of slides] present our work in a concise way. You might want to check it out.
+
+
 ## Blog:
-The details about this project have been accounted on this blogpost [here]. Do have a look.
+A more detailed account about this project have been documented on this blogpost [here].
 
 ## Installation Dependencies:
 
@@ -51,4 +55,4 @@ https://github.com/sourabhv/FlapPyBird
 
 
 [here]: <https://medium.com/@videshsuman/using-reinforcement-learning-techniques-to-build-an-ai-bot-for-the-game-flappy-bird-30e0fd22f990>
-
+[set of slides]: <https://slides.com/videshsuman/deck-2/>
